@@ -13,7 +13,6 @@ operator = ""
 opVar = False
 sumIt = 0
 
-
 class Main(QtGui.QMainWindow):
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
@@ -106,7 +105,7 @@ class Main(QtGui.QMainWindow):
         skinMenu.addAction(grayButton)
 
         zero = QtGui.QPushButton("0", self)
-        zero.move(10, 205)
+        zero.move(50, 205)
         zero.resize(35, 30)
 
         one = QtGui.QPushButton("1", self)
@@ -144,11 +143,6 @@ class Main(QtGui.QMainWindow):
         nine = QtGui.QPushButton("9", self)
         nine.move(90, 100)
         nine.resize(35, 30)
-
-        switch = QtGui.QPushButton("+/-", self)
-        switch.move(50, 205)
-        switch.resize(35, 30)
-        switch.clicked.connect(self.Switch)
 
         point = QtGui.QPushButton(".", self)
         point.move(90, 205)
@@ -205,7 +199,7 @@ class Main(QtGui.QMainWindow):
 
         ops = [back, c, ce, div, mult, minus, plus, equal, sqrt, squared]
 
-        rest = [switch, squared, sqrt, point]
+        rest = [squared, sqrt, point]
 
         for i in nums:
             i.setStyleSheet("color:blue;")
@@ -223,7 +217,7 @@ class Main(QtGui.QMainWindow):
         self.setPalette(palette)
         self.setGeometry(300, 300, 210, 220)
         self.setFixedSize(210, 280)
-        self.setWindowTitle("")
+        self.setWindowTitle("Calculator")
         self.setWindowIcon(QtGui.QIcon(""))
         self.show()
 
@@ -236,7 +230,8 @@ class Main(QtGui.QMainWindow):
         global sumAll
 
         char = event.text()
-        if char == '0' or char == '1' or char == '2' or char == '3' or char == '4' or char == '5' or char == '6' or  char =='7' or char == '8' or char == '9':
+        if char == '0' or char == '1' or char == '2' or char == '3' or char == '4' or char == '5' \
+                or char == '6' or  char =='7' or char == '8' or char == '9':
             newNum = int(char)
             setNum = str(newNum)
 
@@ -256,6 +251,9 @@ class Main(QtGui.QMainWindow):
 
         if char == '=':
             self.Equal()
+
+        if char == '.':
+            self.pointClicked()
 
         if event.key() == QtCore.Qt.Key_Escape:
             self.close()
@@ -283,21 +281,6 @@ class Main(QtGui.QMainWindow):
 
         if "." not in self.line.text():
             self.line.setText(self.line.text() + ".")
-
-    def Switch(self):
-        global num
-
-        try:
-            num = int(self.line.text())
-
-        except:
-            num = float(self.line.text())
-
-        num = num - num * 2
-
-        numStr = str(num)
-
-        self.line.setText(numStr)
 
     def Operator(self):
         global num
@@ -394,9 +377,7 @@ def main():
     app = QtGui.QApplication(sys.argv)
     main = Main()
     main.show()
-
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
