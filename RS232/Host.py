@@ -39,7 +39,7 @@ def encodeMessage(string):
     return encodedMessage[1:]
 
 def censor(sentence):
-    badWords = ['karakan', 'piwo', 'wodka', 'Wojtek', 'stonoga', 'fajki', 'papierosy']
+    badWords = ['karakan', 'piwo', 'wodka', 'Wojtek', 'stonoga', 'fajki', 'papierosy', 'lewak', 'lewactwo']
     for word in badWords:
         if word in sentence:
             sentence = sentence.replace(word, len(word) * '*')

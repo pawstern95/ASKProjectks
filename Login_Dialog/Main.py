@@ -83,25 +83,66 @@ class MainScreen(QWidget):
 
     def __init__(self):
         super(MainScreen, self).__init__()
-        self.mainTime = 0
+
+        self.progress = 0
+        self.amountOfProducts = 0
+        self.productLabel = QLabel(self)
+        self.productLabel.setText('Wyprodukowano sztuk: {0}   '.format(self.amountOfProducts))
+
+        self.mainTimer = QTimer()
+        self.mainTimer.setInterval(15000)
+        self.mainTimer.timeout.connect(self.presenceControl)
+
+        self.warningTimer = QTimer()
+        self.warningTimer.setInterval(10000)
+        self.warningTimer.timeout.connect(self.warningAction)
+        self.warningTimer.start()
+
+        self.pBar = QProgressBar(self)
+        self.pBar.setGeometry(20, 200, 400, 20)
+        self.progressTimer = QTimer()
+        self.progressTimer.setInterval(500)
+        self.progressTimer.timeout.connect(self.progressAction)
+
+        self.productionSpeedSlider = QSlider(Qt.Horizontal, self)
+        self.productionSpeedSlider.setMinimum(1)
+        self.productionSpeedSlider.setMaximum(10)
+        self.productionSpeedSlider.move(20, 100)
+        self.productionSpeedSlider.setValue(5)
+        self.productionSpeedSlider.setTickPosition(QSlider.TicksBothSides)
+        self.productionSpeedSlider.setTickInterval(1)
+        self.productionSpeedSlider.valueChanged.connect(lambda: self.progressTimer.setInterval(100*self.productionSpeedSlider.value()))
+
+        startButton = QPushButton('Start', self)
+        startButton.setGeometry(20, 250, 70, 30)
+        startButton.clicked.connect(self.progressTimer.start)
+
+        stopButton = QPushButton('Stop', self)
+        stopButton.setGeometry(310, 250, 70, 30)
+        stopButton.clicked.connect(self.progressTimer.stop)
+
         logoutButton = QPushButton('Wyloguj!', self)
         logoutButton.setGeometry(610, 10, 70, 30)
         logoutButton.clicked.connect(self.logoutClicked.emit)
         logoutButton.clicked.connect(self.stopMainTime)
-        self.mainTimer = QTimer()
-        self.mainTimer.setInterval(1000)
-        self.mainTimer.timeout.connect(self.presenceControl)
+        logoutButton.clicked.connect(self.progressTimer.stop)
+
+    def progressAction(self):
+        self.progress += 1
+        if self.progress > 100:
+            self.progress = 0
+            self.amountOfProducts += 1
+            self.productLabel.setText('Wyprodukowano sztuk: {0}   '.format(self.amountOfProducts))
+        self.pBar.setValue(self.progress)
 
     def stopMainTime(self):
         self.mainTime = 0
         self.mainTimer.stop()
 
     def presenceControl(self):
-        self.mainTime += 1
-        if self.mainTime % 15 == 0:
-            self.callControlBox()
-            self.mainTime = 0
-            self.mainTimer.stop()
+        self.callControlBox()
+        self.mainTime = 0
+        self.mainTimer.stop()
 
     def callControlBox(self):
         self.controlBox = QMessageBox(self)
@@ -113,6 +154,12 @@ class MainScreen(QWidget):
         self.controlBox.open()
         self.timer.timeout.connect(self.changeContent)
         self.timer.start()
+
+    def warningAction(self):
+        if random.randrange(0, 5) == 1:
+            warningBox = QMessageBox(self)
+            warningBox.setText('Silnik uległ awarii!!!')
+            warningBox.open()
 
     def changeContent(self):
         self.timeToWait -= 1
@@ -126,6 +173,7 @@ class MainScreen(QWidget):
             self.controlBox.close()
             self.timeToWait = 10
             self.timer.stop()
+            self.progressTimer.stop()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
