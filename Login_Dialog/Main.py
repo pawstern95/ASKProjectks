@@ -1,9 +1,7 @@
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtTest import *
 import sys
-import time
 import random
 from Sound import Sound
 import threading
@@ -20,15 +18,16 @@ class MainWindow(QMainWindow):
         #dodanie ekranów do głównego okna
         self.central_widget.addWidget(self.start_screen)
         self.central_widget.addWidget(self.main_screen)
-        self.setGeometry(300,100,700,500)
+        self.setGeometry(300,100,700,300)
 
         #ustawienie ekranu start jako domyslnego
-        self.central_widget.setCurrentWidget(self.main_screen)
+        self.central_widget.setCurrentWidget(self.start_screen)
         #Nasłuchiwanie działań z ekranów i przełączanie ich
 
         self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen))
         self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen.mainTimer.start()))
         self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen.warningTimer.start()))
+        self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen.temperatureTimer.start()))
         self.main_screen.logoutClicked.connect(lambda: self.central_widget.setCurrentWidget(self.start_screen))
 
 
@@ -41,6 +40,9 @@ class StartScreen(QWidget):
         loginButton.setGeometry(365, 200, 70, 30)
         loginButton.clicked.connect(self.checkCorrectness)
         self.prepareLabels()
+
+        self.tempWarning = False
+        self.engineWarning = False
 
         self.textLog = QLineEdit(self)
         self.textLog.move(300, 100)
@@ -89,38 +91,52 @@ class MainScreen(QWidget):
 
         self.progress = 0
         self.amountOfProducts = 0
+        font = QFont('times', 16)
         self.productLabel = QLabel(self)
         self.productLabel.setText('Wyprodukowano sztuk: {0}   '.format(self.amountOfProducts))
+        self.productLabel.setFont(font)
+        self.productLabel.move(20, 30)
+
+
+        l1 = QLabel('min', self)
+        l1.move(636, 80)
+
+        l2 = QLabel('max', self)
+        l2.move(636, 190)
 
         self.mainTimer = QTimer()
-        self.mainTimer.setInterval(15000)
+        self.mainTimer.setInterval(20000)
         self.mainTimer.timeout.connect(self.presenceControl)
 
         self.warningTimer = QTimer()
-        self.warningTimer.setInterval(5000)
+        self.warningTimer.setInterval(7000)
         self.warningTimer.timeout.connect(self.warningAction)
 
+        self.temperatureTimer = QTimer()
+        self.temperatureTimer.setInterval(4000)
+        self.temperatureTimer.timeout.connect(self.temperatureAction)
+
         self.pBar = QProgressBar(self)
-        self.pBar.setGeometry(20, 200, 400, 20)
+        self.pBar.setGeometry(20, 100, 600, 30)
         self.progressTimer = QTimer()
         self.progressTimer.setInterval(500)
         self.progressTimer.timeout.connect(self.progressAction)
 
-        self.productionSpeedSlider = QSlider(Qt.Horizontal, self)
+        self.productionSpeedSlider = QSlider( self)
         self.productionSpeedSlider.setMinimum(1)
         self.productionSpeedSlider.setMaximum(10)
-        self.productionSpeedSlider.move(20, 100)
+        self.productionSpeedSlider.move(630, 100)
         self.productionSpeedSlider.setValue(5)
         self.productionSpeedSlider.setTickPosition(QSlider.TicksBothSides)
         self.productionSpeedSlider.setTickInterval(1)
         self.productionSpeedSlider.valueChanged.connect(lambda: self.progressTimer.setInterval(100*self.productionSpeedSlider.value()))
 
         startButton = QPushButton('Start', self)
-        startButton.setGeometry(20, 250, 70, 30)
+        startButton.setGeometry(20, 150, 70, 30)
         startButton.clicked.connect(self.progressTimer.start)
 
         stopButton = QPushButton('Stop', self)
-        stopButton.setGeometry(310, 250, 70, 30)
+        stopButton.setGeometry(510, 150, 70, 30)
         stopButton.clicked.connect(self.progressTimer.stop)
 
         logoutButton = QPushButton('Wyloguj!', self)
@@ -128,6 +144,9 @@ class MainScreen(QWidget):
         logoutButton.clicked.connect(self.logoutClicked.emit)
         logoutButton.clicked.connect(self.stopMainTime)
         logoutButton.clicked.connect(self.progressTimer.stop)
+        logoutButton.clicked.connect(self.warningTimer.stop)
+        logoutButton.clicked.connect(self.temperatureTimer.stop)
+
 
     def progressAction(self):
         self.progress += 1
@@ -165,6 +184,14 @@ class MainScreen(QWidget):
             threading.Thread(target=Sound).start()
             warningBox.open()
 
+    def temperatureAction(self):
+        if random.randrange(0, 5) == 1:
+            temperatureBox = QMessageBox(self)
+            temperatureBox.setText('Przekroczono temperaturę rdzenia!!! Zmniejszono tempo pracy!!!')
+            self.progressTimer.setInterval(1000)
+            self.productionSpeedSlider.setValue(10)
+            temperatureBox.open()
+
     def changeContent(self):
         self.timeToWait -= 1
         self.controlBox.setText('Kontrola obecności. Zareaguj w ciągu {0} sekund!'.format(self.timeToWait))
@@ -180,6 +207,7 @@ class MainScreen(QWidget):
             self.timer.stop()
             self.warningTimer.stop()
             self.progressTimer.stop()
+            self.temperatureTimer.stop()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
