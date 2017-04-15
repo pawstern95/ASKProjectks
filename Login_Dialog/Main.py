@@ -5,6 +5,8 @@ from PyQt5.QtTest import *
 import sys
 import time
 import random
+from Sound import Sound
+import threading
 
 class MainWindow(QMainWindow):
 
@@ -26,6 +28,7 @@ class MainWindow(QMainWindow):
 
         self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen))
         self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen.mainTimer.start()))
+        self.start_screen.mainClicked.connect(lambda: self.central_widget.setCurrentWidget(self.main_screen.warningTimer.start()))
         self.main_screen.logoutClicked.connect(lambda: self.central_widget.setCurrentWidget(self.start_screen))
 
 
@@ -94,9 +97,8 @@ class MainScreen(QWidget):
         self.mainTimer.timeout.connect(self.presenceControl)
 
         self.warningTimer = QTimer()
-        self.warningTimer.setInterval(10000)
+        self.warningTimer.setInterval(5000)
         self.warningTimer.timeout.connect(self.warningAction)
-        self.warningTimer.start()
 
         self.pBar = QProgressBar(self)
         self.pBar.setGeometry(20, 200, 400, 20)
@@ -158,7 +160,9 @@ class MainScreen(QWidget):
     def warningAction(self):
         if random.randrange(0, 5) == 1:
             warningBox = QMessageBox(self)
-            warningBox.setText('Silnik uległ awarii!!!')
+            warningBox.setText('Silnik uległ awarii!!! Wstrzymano produkcję!!!')
+            self.progressTimer.stop()
+            threading.Thread(target=Sound).start()
             warningBox.open()
 
     def changeContent(self):
@@ -170,9 +174,11 @@ class MainScreen(QWidget):
             self.mainTimer.start()
         if self.timeToWait <= 0:
             self.logoutClicked.emit()
+            threading.Thread(target=Sound).start()
             self.controlBox.close()
             self.timeToWait = 10
             self.timer.stop()
+            self.warningTimer.stop()
             self.progressTimer.stop()
 
 if __name__ == "__main__":
